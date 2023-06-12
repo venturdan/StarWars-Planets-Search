@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import PlanetsContext from '../context/PlanetsContext';
 
 function Filter() {
-  const { setFilterName, filteredPlanets, 
+  const { setFilterName, filteredPlanets,
     setFilteredPlanets } = useContext(PlanetsContext);
 
   const [column, setColumn] = useState('population');
