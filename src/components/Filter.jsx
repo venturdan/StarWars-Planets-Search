@@ -9,6 +9,8 @@ function Filter() {
   const [comparison, setComparison] = useState('maior que');
   const [filterValue, setFilterValue] = useState(0);
   const [selectedColumns, setSelectedColumns] = useState([]);
+  const [sortColumn, setSortColumn] = useState('population');
+  const [sortOrder, setsortOrder] = useState('ASC');
 
   const handleColumnSelect = ({ target }) => {
     const { value } = target;
@@ -50,6 +52,43 @@ function Filter() {
   const handleNameChange = ({ target }) => {
     const { value } = target;
     setFilterName(value);
+  };
+
+  const updateSortKey = ({ target }) => {
+    setSortColumn(target.value);
+  };
+
+  const updateSortOrder = ({ target }) => {
+    setsortOrder(target.value);
+  };
+
+  const handleSort = () => {
+    const DESCENDING_VALUE = -1;
+
+    const sortedPlanets = [...filteredPlanets].sort((a, b) => {
+      const numA = a[sortColumn];
+      const numB = b[sortColumn];
+
+      if (numA === 'unknown' && numB === 'unknown') {
+        return 0;
+      }
+
+      if (numA === 'unknown') {
+        return 1;
+      }
+
+      if (numB === 'unknown') {
+        return DESCENDING_VALUE;
+      }
+
+      const valA = parseInt(numA, 10);
+      const valB = parseInt(numB, 10);
+
+      return sortOrder === 'ASC' ? valA
+       - valB : valB - valA;
+    });
+
+    setFilteredPlanets(sortedPlanets);
   };
 
   const columnOptions = [
@@ -117,6 +156,47 @@ function Filter() {
         onClick={ filterSelectHandler }
       >
         Filtrar
+      </button>
+
+      <select
+        name="sort-column"
+        data-testid="column-sort"
+        value={ sortColumn }
+        onChange={ updateSortKey }
+      >
+        <option value="population">population</option>
+        <option value="orbital_period">orbital_period</option>
+        <option value="diameter">diameter</option>
+        <option value="rotation_period">rotation_period</option>
+        <option value="surface_water">surface_water</option>
+      </select>
+
+      <div>
+        <input
+          type="radio"
+          name="sort-direction"
+          value="ASC"
+          data-testid="column-sort-input-asc"
+          checked={ sortOrder === 'ASC' }
+          onChange={ updateSortOrder }
+        />
+        <label htmlFor="column-sort-input-asc">Ascendente</label>
+      </div>
+
+      <div>
+        <input
+          type="radio"
+          name="sort-direction"
+          value="DESC"
+          data-testid="column-sort-input-desc"
+          checked={ sortOrder === 'DESC' }
+          onChange={ updateSortOrder }
+        />
+        <label htmlFor="column-sort-input-desc">Descendente</label>
+      </div>
+
+      <button data-testid="column-sort-button" onClick={ handleSort }>
+        ORDENAR
       </button>
     </div>
   );
