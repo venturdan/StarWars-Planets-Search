@@ -8,23 +8,28 @@ function Filter() {
   const [column, setColumn] = useState('population');
   const [comparison, setComparison] = useState('maior que');
   const [filterValue, setFilterValue] = useState(0);
+  const [selectedColumns, setSelectedColumns] = useState([]);
 
   const handleColumnSelect = ({ target }) => {
     const { value } = target;
     setColumn(value);
   };
 
-  const handleComparisonSelect = ({ target }) => {
+  const onComparisonSelect = ({ target }) => {
     const { value } = target;
     setComparison(value);
   };
 
-  const handleFilterValueChange = ({ target }) => {
+  const onFilterValueChange = ({ target }) => {
     const { value } = target;
     setFilterValue(value);
   };
 
-  const handleFilterButtonClick = () => {
+  const filterSelectHandler = () => {
+    if (selectedColumns.includes(column)) {
+      return;
+    }
+
     setFilteredPlanets(filteredPlanets.filter((planet) => {
       switch (comparison) {
       case 'maior que':
@@ -37,12 +42,23 @@ function Filter() {
         return planet;
       }
     }));
+
+    setSelectedColumns([...selectedColumns, column]);
+    setColumn('population');
   };
 
   const handleNameChange = ({ target }) => {
     const { value } = target;
     setFilterName(value);
   };
+
+  const columnOptions = [
+    'population',
+    'orbital_period',
+    'diameter',
+    'rotation_period',
+    'surface_water',
+  ].filter((columns) => !selectedColumns.includes(columns));
 
   return (
     <div className="filter-div">
@@ -62,12 +78,13 @@ function Filter() {
           data-testid="column-filter"
           id="column-filter"
           onChange={ handleColumnSelect }
+          value={ column }
         >
-          <option value="population">population</option>
-          <option value="orbital_period">orbital_period</option>
-          <option value="diameter">diameter</option>
-          <option value="rotation_period">rotation_period</option>
-          <option value="surface_water">surface_water</option>
+          {columnOptions.map((columns) => (
+            <option key={ columns } value={ columns }>
+              {columns}
+            </option>
+          ))}
         </select>
       </label>
 
@@ -75,7 +92,7 @@ function Filter() {
         <select
           data-testid="comparison-filter"
           id="comparison-filter"
-          onChange={ handleComparisonSelect }
+          onChange={ onComparisonSelect }
         >
           <option value="maior que">maior que</option>
           <option value="menor que">menor que</option>
@@ -90,14 +107,14 @@ function Filter() {
           type="number"
           value={ filterValue }
           placeholder="Pesquisar"
-          onChange={ handleFilterValueChange }
+          onChange={ onFilterValueChange }
         />
       </label>
 
       <button
         data-testid="button-filter"
         type="button"
-        onClick={ handleFilterButtonClick }
+        onClick={ filterSelectHandler }
       >
         Filtrar
       </button>
