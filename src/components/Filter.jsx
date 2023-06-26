@@ -198,6 +198,15 @@ function Filter() {
       <button data-testid="column-sort-button" onClick={ handleSort }>
         ORDENAR
       </button>
+      {/* Botão de exclusão de filtro */}
+      <div data-testid="filter">
+        <button>Remover Filtro</button>
+      </div>
+
+      {/* Botão de remover todas as filtragens */}
+      <button data-testid="button-remove-filters">
+        Remover todas as filtragens
+      </button>
     </div>
   );
 }
