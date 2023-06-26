@@ -1,38 +1,49 @@
-import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import PlanetsContext from './PlanetsContext';
 
+const PLANETS_STATE = {
+  planets: [],
+  planetName: '',
+  filterName: {
+    diameter: { value: 0, comparison: '' },
+    orbital_period: { value: 0, comparison: '' },
+    population: { value: 0, comparison: '' },
+    rotation_period: { value: 0, comparison: '' },
+    surface_water: { value: 0, comparison: '' },
+  },
+  sort: { column: 'population', sort: 'ASC' },
+  sorted: false,
+};
+
 function PlanetsProvider({ children }) {
-  const [planets, setPlanets] = useState([]);
-  const [filterName, setFilterName] = useState('');
-  const [filteredPlanets, setFilteredPlanets] = useState(planets);
-  const URL = 'https://swapi.dev/api/planets/';
+  const [planetsState, setPlanetsState] = useState(PLANETS_STATE);
+
+  const fetchPlanetsAPI = async () => {
+    const response = await fetch('https://swapi.dev/api/planets');
+    const data = await response.json();
+    const result = data.results.map((planet) => {
+      delete planet.residents;
+      return planet;
+    });
+    return result;
+  };
+
+  const updatePlanetsState = (planets) => {
+    setPlanetsState({ ...PLANETS_STATE, planets });
+  };
 
   useEffect(() => {
     const fetchPlanets = async () => {
-      const response = await fetch(URL);
-      const data = await response.json();
-      const result = data.results.filter((planet) => delete planet.residents);
-      setPlanets(result);
+      const planets = await fetchPlanetsAPI();
+      updatePlanetsState(planets);
     };
     fetchPlanets();
   }, []);
 
-  useEffect(() => {
-    const filterPlanets = () => {
-      setFilteredPlanets(planets.filter(({ name }) => (
-        name.toLowerCase().includes(filterName.toLowerCase())
-      )));
-    };
-    filterPlanets();
-  }, [filterName, planets]);
-
   const contextValue = {
-    planets,
-    filterName,
-    setFilterName,
-    filteredPlanets,
-    setFilteredPlanets,
+    state: planetsState,
+    setState: setPlanetsState,
   };
 
   return (

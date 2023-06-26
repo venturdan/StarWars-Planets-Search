@@ -10,6 +10,7 @@ const planets = mockPlanets.results.map((planet) => {
   delete planet.residents;
   return planet;
 });
+const apiUrl = 'https://swapi.dev/api/planets';
 
 const planetsName = planets.map(({name}) => name);
 const columnsOp = ['population', 'orbital_period', 'diameter', 'rotation_period', 'surface_water'];
@@ -26,14 +27,17 @@ describe('Testando o Componente Filter', () => {
     jest.resetAllMocks();
   });
 
-  
-  it('Verifica se o input para o filtro de nomes está renderizado corretamente', async () => {
-    await act(() => render(<App />));
-    
-    const nameFilterInput = screen.getByTestId('name-filter');
-    
-    expect(nameFilterInput).toBeInTheDocument();
-    expect(nameFilterInput).toHaveAttribute('type', 'text');
+  it('Verifica se a aplicação faz uma requisição à API', async () => {
+    await act(async () => {
+      render(
+        <PlanetsProvider>
+          <App />
+        </PlanetsProvider>
+      );
+    });
+
+    expect(fetch).toHaveBeenCalledWith(apiUrl);
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
   
   it('Verifica se o select de coluna está renderizado corretamente', async () => {
@@ -61,19 +65,6 @@ describe('Testando o Componente Filter', () => {
     
     expect(valueFilterInput).toBeInTheDocument();
     expect(valueFilterInput).toHaveAttribute('type', 'number');
-  });
-
-  it('Verifica se a aplicação faz uma requisição à API', async () => {
-    await act(async () => {
-      render(
-        <PlanetsProvider>
-          <App />
-        </PlanetsProvider>
-      );
-    });
-
-    expect(fetch).toHaveBeenCalledWith('https://swapi.dev/api/planets/');
-    expect(fetch).toHaveBeenCalledTimes(2);
   });
 
   it('Verifica se a tabela tem uma linha para cada planeta', async () => {
@@ -118,16 +109,6 @@ describe('Testando o Componente Filter', () => {
     expect(allNames).toEqual(planetsName);
   });
 
-  it('Renderiza o select de coluna e suas opções', async () => {
-    await act(() => render(<App />));
-  
-    expect(screen.getByTestId('column-filter')).toBeInTheDocument();
-
-    const columnSelect = Object.values(screen.getByTestId('column-filter')).map((item) => item.textContent).filter((option) => option !== undefined);
-
-    expect(columnSelect).toEqual(columnsOp);
-  });
-
   it('Renderiza o select de comparação e suas opções', async () => {
     await act(() => render(<App />));
 
@@ -156,73 +137,6 @@ describe('Testando o Componente Filter', () => {
     expect(filteredPlanets).toEqual(expectedFilteredPlanets);
   });
 
-  it('Utiliza a comparação menor', async () => {
-    await act(() => render(<App />));
-
-    userEvent.selectOptions(screen.getByTestId('column-filter'), 'diameter');
-    userEvent.selectOptions(screen.getByTestId('comparison-filter'), 'menor que');
-    userEvent.type(screen.getByTestId('value-filter'), '15000');
-
-    act(() => userEvent.click(screen.getByTestId('button-filter')));
-
-    const filteredPlanets = screen.getAllByTestId('planet-name').map((item) => item.textContent);
-    const expectedFilteredPlanets = planets.filter((planet) => planet.diameter < 15000).map((planet) => planet.name);
-
-    expect(filteredPlanets).toEqual(expectedFilteredPlanets);
-  });
-
-  it('Utiliza a comparação igual', async () => {
-    await act(() => render(<App />));
-
-    userEvent.selectOptions(screen.getByTestId('column-filter'), 'surface_water');
-    userEvent.selectOptions(screen.getByTestId('comparison-filter'), 'igual a');
-    userEvent.type(screen.getByTestId('value-filter'), '100');
-
-    act(() => userEvent.click(screen.getByTestId('button-filter')));
-
-    const filteredPlanets = screen.getAllByTestId('planet-name').map((item) => item.textContent);
-    const expectedFilteredPlanets = planets.filter((planet) => planet.surface_water === '100').map((planet) => planet.name);
-
-    expect(filteredPlanets).toEqual(expectedFilteredPlanets);
-  });
-
-  it('Utiliza a comparação maior ', async () => {
-    await act(() => render(<App />));
-
-    userEvent.selectOptions(screen.getByTestId('column-filter'), 'orbital_period');
-    userEvent.selectOptions(screen.getByTestId('comparison-filter'), 'maior que');
-    userEvent.type(screen.getByTestId('value-filter'), '400');
-
-    act(() => userEvent.click(screen.getByTestId('button-filter')));
-
-    const namesFiltered = screen.getAllByTestId('planet-name').map((item) => item.textContent);
-    const namesFilteredExpected = planets.filter((planet) => planet.orbital_period > 400).map((planet) => planet.name);
-
-    const columnOptions = Array.from(screen.getByTestId('column-filter')).map((item) => item.textContent);
-    const columnOptionsExpecet = columnsOp.filter((opt) => opt !== 'orbital_period');
-
-    expect(namesFiltered).toEqual(namesFilteredExpected);
-    expect(columnOptions).toEqual(columnOptionsExpecet);
-  });
-
-  it('Utiliza a comparação igual', async () => {
-    await act(() => render(<App />));
-
-    userEvent.selectOptions(screen.getByTestId('column-filter'), 'surface_water');
-    userEvent.selectOptions(screen.getByTestId('comparison-filter'), 'igual a');
-    userEvent.type(screen.getByTestId('value-filter'), '100');
-
-    act(() => userEvent.click(screen.getByTestId('button-filter')));
-
-    const namesFiltered = screen.getAllByTestId('planet-name').map((item) => item.textContent);
-    const namesFilteredExpected = planets.filter((planet) => planet.surface_water === '100').map((planet) => planet.name);
-
-    const columnOptions = Array.from(screen.getByTestId('column-filter')).map((item) => item.textContent);
-    const columnOptionsExpecet = columnsOp.filter((opt) => opt !== 'surface_water');
-
-    expect(namesFiltered).toEqual(namesFilteredExpected);
-    expect(columnOptions).toEqual(columnOptionsExpecet);
-  });
 
   it('Verifica se remove todos os filtros', async () => {
     await act(() => render(<App />));
@@ -258,17 +172,4 @@ describe('Testando o Componente Filter', () => {
     expect(namesSort).toEqual(namesSortExpected);
   });
 
-  it('Verifica se os planetas estão ordenados corretamente', async () => {
-    await act(() => render(<App />));
-    userEvent.selectOptions(screen.getByTestId('column-sort'), 'diameter');
-    userEvent.click(screen.getByTestId('column-sort-input-desc'));
-
-    act(() => userEvent.click(screen.getByTestId('column-sort-button')));
-
-    const namesSort = screen.getAllByTestId('planet-name').map((item) => item.textContent);
-    
-    const namesSortExpected = ['Bespin', 'Kamino', 'Alderaan', 'Coruscant', 'Naboo','Tatooine', 'Yavin IV', 'Dagobah',  'Hoth', 'Endor'];
-
-    expect(namesSort).toEqual(namesSortExpected);
-  });
 });

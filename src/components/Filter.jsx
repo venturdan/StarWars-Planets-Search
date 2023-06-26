@@ -2,167 +2,109 @@ import React, { useContext, useState } from 'react';
 import PlanetsContext from '../context/PlanetsContext';
 
 function Filter() {
-  const { setFilterName, filteredPlanets,
-    setFilteredPlanets } = useContext(PlanetsContext);
+  const { state, setState } = useContext(PlanetsContext);
+  const { filterName } = state;
+  const {
+    population,
+    orbital_period: orbitalPeriod,
+    diameter,
+    rotation_period: rotationPeriod,
+    surface_water: surfaceWater,
+  } = filterName;
 
-  const [column, setColumn] = useState('population');
-  const [comparison, setComparison] = useState('maior que');
-  const [filterValue, setFilterValue] = useState(0);
-  const [selectedColumns, setSelectedColumns] = useState([]);
-  const [sortColumn, setSortColumn] = useState('population');
-  const [sortOrder, setsortOrder] = useState('ASC');
+  const [selectedColumn, setSelectedColumn] = useState('population');
+  const [selectedComparison, setSelectedComparison] = useState('maior que');
+  const [selectedValue, setSelectedValue] = useState(0);
+  const [sort, setSort] = useState({ column: 'population', sort: 'ASC' });
 
-  const handleColumnSelect = ({ target }) => {
-    const { value } = target;
-    setColumn(value);
+  const handleFilterClick = () => {
+    setState({
+      ...state,
+      filterName: {
+        ...filterName,
+        [selectedColumn]: {
+          value: selectedValue,
+          comparison: selectedComparison,
+        },
+      },
+    });
+    setSelectedColumn('');
+    setSelectedComparison('maior que');
+    setSelectedValue(0);
   };
 
-  const onComparisonSelect = ({ target }) => {
-    const { value } = target;
-    setComparison(value);
-  };
-
-  const onFilterValueChange = ({ target }) => {
-    const { value } = target;
-    setFilterValue(value);
-  };
-
-  const filterSelectHandler = () => {
-    if (selectedColumns.includes(column)) {
-      return;
-    }
-
-    setFilteredPlanets(filteredPlanets.filter((planet) => {
-      switch (comparison) {
-      case 'maior que':
-        return Number(planet[column]) > Number(filterValue);
-      case 'menor que':
-        return Number(planet[column]) < Number(filterValue);
-      case 'igual a':
-        return Number(planet[column]) === Number(filterValue);
-      default:
-        return planet;
-      }
-    }));
-
-    setSelectedColumns([...selectedColumns, column]);
-    setColumn('population');
+  const removeFilter = (filter) => {
+    setState({
+      ...state,
+      filterName: {
+        ...filterName,
+        [filter]: { value: 0, comparison: '' },
+      },
+    });
   };
 
   const handleNameChange = ({ target }) => {
-    const { value } = target;
-    setFilterName(value);
+    const { name, value } = target;
+    setState({ ...state, [name]: value });
   };
-
-  const updateSortKey = ({ target }) => {
-    setSortColumn(target.value);
-  };
-
-  const updateSortOrder = ({ target }) => {
-    setsortOrder(target.value);
-  };
-
-  const handleSort = () => {
-    const DESCENDING_VALUE = -1;
-
-    const sortedPlanets = [...filteredPlanets].sort((a, b) => {
-      const numA = a[sortColumn];
-      const numB = b[sortColumn];
-
-      if (numA === 'unknown' && numB === 'unknown') {
-        return 0;
-      }
-
-      if (numA === 'unknown') {
-        return 1;
-      }
-
-      if (numB === 'unknown') {
-        return DESCENDING_VALUE;
-      }
-
-      const valA = parseInt(numA, 10);
-      const valB = parseInt(numB, 10);
-
-      return sortOrder === 'ASC' ? valA
-       - valB : valB - valA;
-    });
-
-    setFilteredPlanets(sortedPlanets);
-  };
-
-  const columnOptions = [
-    'population',
-    'orbital_period',
-    'diameter',
-    'rotation_period',
-    'surface_water',
-  ].filter((columns) => !selectedColumns.includes(columns));
 
   return (
-    <div className="filter-div">
-      <label htmlFor="name-filter">
-        <input
-          data-testid="name-filter"
-          id="name-filter"
-          type="text"
-          placeholder="Pesquisar"
-          onChange={ handleNameChange }
-        />
-      </label>
+    <form>
+      <input
+        data-testid="name-filter"
+        name="planetName"
+        onChange={ handleNameChange }
+        placeholder="Pesquisar"
+      />
 
-      <label htmlFor="column-filter">
-        Coluna:
-        <select
-          data-testid="column-filter"
-          id="column-filter"
-          onChange={ handleColumnSelect }
-          value={ column }
-        >
-          {columnOptions.map((columns) => (
-            <option key={ columns } value={ columns }>
-              {columns}
-            </option>
-          ))}
-        </select>
-      </label>
+      <select
+        name="column-filter"
+        data-testid="column-filter"
+        onClick={ ({ target: { value } }) => setSelectedColumn(value) }
+      >
+        {population.comparison.length === 0
+        && <option value="population">population</option>}
+        {orbitalPeriod.comparison.length === 0
+        && <option value="orbital_period">orbital_period</option>}
+        {rotationPeriod.comparison.length === 0
+        && <option value="rotation_period">rotation_period</option>}
+        {diameter.comparison.length === 0
+        && <option value="diameter">diameter</option>}
+        {surfaceWater.comparison.length === 0
+        && <option value="surface_water">surface_water</option>}
+      </select>
 
-      <label htmlFor="comparison-filter">
-        <select
-          data-testid="comparison-filter"
-          id="comparison-filter"
-          onChange={ onComparisonSelect }
-        >
-          <option value="maior que">maior que</option>
-          <option value="menor que">menor que</option>
-          <option value="igual a">igual a</option>
-        </select>
-      </label>
+      <select
+        name="comparison-filter"
+        data-testid="comparison-filter"
+        onChange={ ({ target: { value } }) => setSelectedComparison(value) }
+      >
+        <option value="maior que">maior que</option>
+        <option value="menor que">menor que</option>
+        <option value="igual a">igual a</option>
+      </select>
 
-      <label htmlFor="value-filter">
-        <input
-          data-testid="value-filter"
-          id="value-filter"
-          type="number"
-          value={ filterValue }
-          placeholder="Pesquisar"
-          onChange={ onFilterValueChange }
-        />
-      </label>
+      <input
+        data-testid="value-filter"
+        onChange={ ({ target: { value } }) => setSelectedValue(value) }
+        name="value-filter"
+        value={ selectedValue }
+        type="number"
+      />
 
       <button
-        data-testid="button-filter"
         type="button"
-        onClick={ filterSelectHandler }
+        data-testid="button-filter"
+        onClick={ handleFilterClick }
+        disabled={ selectedColumn === '' }
       >
         Filtrar
       </button>
 
       <select
-        name="sort-column"
         data-testid="column-sort"
-        value={ sortColumn }
-        onChange={ updateSortKey }
+        value={ sort.column }
+        onChange={ ({ target: { value } }) => { setSort({ ...sort, column: value }); } }
       >
         <option value="population">population</option>
         <option value="orbital_period">orbital_period</option>
@@ -171,43 +113,67 @@ function Filter() {
         <option value="surface_water">surface_water</option>
       </select>
 
-      <div>
-        <input
-          type="radio"
-          name="sort-direction"
-          value="ASC"
-          data-testid="column-sort-input-asc"
-          checked={ sortOrder === 'ASC' }
-          onChange={ updateSortOrder }
-        />
-        <label htmlFor="column-sort-input-asc">Ascendente</label>
-      </div>
+      <label htmlFor="ASC">ASC</label>
+      <input
+        value="ASC"
+        type="radio"
+        name="sort"
+        id="ASC"
+        checked={ sort.sort === 'ASC' }
+        onChange={ () => setSort({ ...sort, sort: 'ASC' }) }
+        data-testid="column-sort-input-asc"
+      />
 
-      <div>
-        <input
-          type="radio"
-          name="sort-direction"
-          value="DESC"
-          data-testid="column-sort-input-desc"
-          checked={ sortOrder === 'DESC' }
-          onChange={ updateSortOrder }
-        />
-        <label htmlFor="column-sort-input-desc">Descendente</label>
-      </div>
+      <label htmlFor="DESC">DESC</label>
+      <input
+        value="DESC"
+        checked={ sort.sort === 'DESC' }
+        onChange={ () => setSort({ ...sort, sort: 'DESC' }) }
+        type="radio"
+        name="sort"
+        id="DESC"
+        data-testid="column-sort-input-desc"
+      />
 
-      <button data-testid="column-sort-button" onClick={ handleSort }>
-        ORDENAR
+      <button
+        type="button"
+        data-testid="column-sort-button"
+        onClick={ () => { setState({ ...state, sort, sorted: true }); } }
+      >
+        Ordenar
       </button>
-      {/* Botão de exclusão de filtro */}
-      <div data-testid="filter">
-        <button>Remover Filtro</button>
-      </div>
+      {Object.keys(filterName)
+        .filter((filter) => filter !== 'planetName'
+        && filterName[filter].comparison !== '')
+        .map((filter) => (
+          <div data-testid="filter" key={ filter }>
+            {`${filter}: ${filterName[filter].value} ${filterName[filter].comparison}`}
+            <button type="button" onClick={ () => { removeFilter(filter); } }>
+              Remover Filtro
+            </button>
+          </div>
+        ))}
 
-      {/* Botão de remover todas as filtragens */}
-      <button data-testid="button-remove-filters">
+      <button
+        data-testid="button-remove-filters"
+        type="button"
+        onClick={ () => {
+          setState({
+            ...state,
+            filterName: {
+              population: { value: 0, comparison: '' },
+              orbital_period: { value: 0, comparison: '' },
+              diameter: { value: 0, comparison: '' },
+              rotation_period: { value: 0, comparison: '' },
+              surface_water: surfaceWater,
+              planetName: '',
+            },
+          });
+        } }
+      >
         Remover todas as filtragens
       </button>
-    </div>
+    </form>
   );
 }
 
